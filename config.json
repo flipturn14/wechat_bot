@@ -1,0 +1,14 @@
+{
+  "server_host": "127.0.0.1:5555",
+
+  "groupChatKey": "g",
+  "groupChatKey4": "c",
+  "grpCitationMode": true,
+  "privateChatKey": "",
+  "prvCitationMode": false,
+
+  "stableDiffRly": true,
+  "groupImgKey": "t",
+  "privateImgKey": "t"
+
+}
