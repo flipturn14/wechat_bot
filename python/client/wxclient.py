@@ -1,3 +1,4 @@
+import os.path
 import re
 
 import websocket
@@ -278,11 +279,14 @@ def save_config():
 
 def load_config():
     global disable_ids
-    print("读取已关闭群组配置到文件")
-    with open("./data.json", encoding="utf-8") as file_object:
-        disable_ids = json.load(file_object)
-    file_object.close()
-    print("读取已关闭群组配置到文件完成")
+    print("读取已关闭消息配置到文件")
+    if os.path.exists("./data.json"):
+        with open("./data.json", encoding="utf-8") as file_object:
+            disable_ids = json.load(file_object)
+        file_object.close()
+        print("读取已关闭消息配置到文件完成")
+    else:
+        print("未找到已关闭消息配置文件")
 
 
 server = "ws://" + server_host
