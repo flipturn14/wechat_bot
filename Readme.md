@@ -7,7 +7,7 @@
 
 ###### 作者
 
-[FlipTurn (github.com)](https://github.com/flip_turn14)
+[FlipTurn (github.com)](https://github.com/flipturn14)
 
 ## 支持和特点
 

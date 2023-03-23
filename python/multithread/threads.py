@@ -17,10 +17,10 @@ class Processor(threading.Thread):
         while True:
             item = self.que.get()
             # 增加异常处理避免退出
-            # try:
-            #     item.start()
-            # except Exception as err:
-            #     print(err)
-            # del item
-            item.start()
+            try:
+                item.start()
+            except Exception as err:
+                print(err)
             del item
+            # item.start()
+            # del item
