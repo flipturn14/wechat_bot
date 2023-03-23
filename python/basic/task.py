@@ -92,7 +92,7 @@ class ImgTask:
             run_time = time.time() - start_time
             hs = "耗时：" + str(run_time) + "秒"
             self.ws.send(send_pic_msg(wx_id=self.room_id if self.is_room else self.wx_id,
-                                      content=os.path.join(os.path.abspath(cache_dir), item['name'])))
+                                      content=item['name']))
             self.ws.send(
                 send_txt_msg(text_string=global_wx_dict[
                                              self.wx_id] + "：" + self.prompt.strip() + "\n--------------------\n" + hs,
