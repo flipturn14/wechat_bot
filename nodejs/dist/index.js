@@ -403,7 +403,7 @@ httpServer.createServer(function (req, res) {
                 body += chunk.toString();
             });
             req.on('end', async () => {
-                console.log("请求内容:" + decodeURIComponent(body));
+                // console.log("请求内容:" + decodeURIComponent(body));
                 let data = JSON.parse(body);
                 let chatBot;
                 if (users[data.wx_id]) {

@@ -1,5 +1,6 @@
 import os.path
 import re
+import time
 
 import websocket
 
@@ -15,7 +16,7 @@ from python.shared.shared import *
 # 公共线程
 global_thread = []
 # 屏蔽id集合，重启失效
-disable_ids = {}
+user_configs = {}
 
 welcome_group = "调用GPT对话请在文字前增加召唤字母\n" \
                 "可用功能为c/g/t\n" \
@@ -112,32 +113,64 @@ def handle_recv_txt_msg(j):
     # ----------基础信息end----------
     # 输出所有消息
     print(get_now() + nick + "：" + content)
+    # 添加VIP用户
+    if wx_id in group_admin:
+        if content.startswith(groupChatKey + "添加"):
+            add_wx_id = re.sub("^" + groupChatKey + "添加", "", content, 1)
+            if user_configs.get(add_wx_id) is not None:
+                user_configs[add_wx_id]['vip'] = True
+                ws.send(send_txt_msg(text_string="添加成功，该用户无限制", wx_id=wx_id))
+                save_config()
+            else:
+                ws.send(send_txt_msg(text_string="此用户不存在", wx_id=wx_id))
+            return
+        elif content.startswith(groupChatKey + "删除"):
+            add_wx_id = re.sub("^" + groupChatKey + "删除", "", content, 1)
+            if user_configs.get(add_wx_id) is not None:
+                user_configs[add_wx_id]['vip'] = False
+                ws.send(send_txt_msg(text_string="删除成功，该用户受限制", wx_id=wx_id))
+                save_config()
+            else:
+                ws.send(send_txt_msg(text_string="此用户不存在", wx_id=wx_id))
+            return
     if is_room:  # 群内消息
+        if user_configs.get(room_id) is None:
+            print(get_now() + nick + "配置文件没有存储该群聊信息，默认关闭。保存至文件")
+            user_configs[room_id] = {
+                "disable": True,
+                "last_time": time.time(),
+                "vip": False
+            }
+            save_config()
         if wx_id in group_admin:
             if content.startswith(groupChatKey + "关闭"):
-                disable_ids[room_id] = "close"
-                print(get_now() + "当前状态" + str(disable_ids.get(room_id)))
+                user_configs[room_id]["disable"] = True
                 ws.send(send_txt_msg(text_string="已经关闭该群的回复，大家再见！", wx_id=room_id))
                 save_config()
                 return
             elif content.startswith(groupChatKey + "启用"):
-                disable_ids[room_id] = "open"
+                user_configs[room_id]["disable"] = False
                 ws.send(send_txt_msg(text_string="大家好，" + welcome_group, wx_id=room_id))
                 save_config()
                 return
     else:  # 个人消息
-        if disable_ids.get(wx_id) is None:
+        if user_configs.get(wx_id) is None:
             print(get_now() + nick + "配置文件没有存储该用户信息，默认关闭。保存至文件")
-            disable_ids[wx_id] = 'close'
+            user_configs[wx_id] = {
+                "disable": True,
+                "last_time": time.time(),
+                "vip": False
+            }
             save_config()
+            ws.send(send_txt_msg(text_string=welcome_private, wx_id=wx_id))
+            return
         if content == "关闭":
-            disable_ids[wx_id] = "close"
-            print(get_now() + "当前状态" + str(disable_ids.get(wx_id)))
+            user_configs[wx_id]["disable"] = True
             ws.send(send_txt_msg(text_string="已经关闭自动回复，如需恢复请输入：启用", wx_id=wx_id))
             save_config()
             return
         elif content == "启用":
-            disable_ids[wx_id] = "open"
+            user_configs[wx_id]["disable"] = False
             ws.send(send_txt_msg(text_string="已经开启自动回复，如需停用请输入：关闭", wx_id=wx_id))
             save_config()
             return
@@ -145,9 +178,21 @@ def handle_recv_txt_msg(j):
             ws.send(send_txt_msg(text_string=welcome_private, wx_id=wx_id))
             return
     # 已关闭群聊或关闭自动回复的，直接返回
-    if disable_ids.get(room_id) == 'close' or disable_ids.get(wx_id) == 'close':
+    if (is_room and user_configs[room_id]["disable"]) or \
+            user_configs.get(wx_id) is None or \
+            user_configs[wx_id]["disable"]:
         return
-
+    # 计算聊天间隔，不判断VIP用户以及管理员
+    last_time = user_configs[wx_id]["last_time"]
+    interval = int(time.time() - last_time)
+    if interval < chat_interval and wx_id not in group_admin and user_configs[wx_id]["vip"] is not True:
+        if not is_room:
+            if interval > chat_interval / 2:
+                ws.send(send_txt_msg(
+                    text_string=("小于设定提问间隔时间%d秒，还需等待%d秒" % (chat_interval, (chat_interval - interval))),
+                    wx_id=wx_id))
+        return
+    user_configs[wx_id]["last_time"] = time.time()
     # 启用了生成图片并且起始关键字一致
     if stableDiffRly and (
             (content.startswith(privateImgKey) and not is_room) or (content.startswith(groupImgKey) and is_room)):
@@ -270,7 +315,7 @@ def on_close(ws):
 
 def save_config():
     print("保存已关闭聊天id配置到文件")
-    data = json.dumps(disable_ids)
+    data = json.dumps(user_configs)
     with open("./data.json", "wb") as file_object:
         file_object.write(data.encode('utf-8'))
     file_object.close()
@@ -278,19 +323,20 @@ def save_config():
 
 
 def load_config():
-    global disable_ids
-    print("读取已关闭消息配置到文件")
+    global user_configs
+    print("读取用户配置到文件")
     if os.path.exists("./data.json"):
         with open("./data.json", encoding="utf-8") as file_object:
-            disable_ids = json.load(file_object)
+            user_configs = json.load(file_object)
         file_object.close()
-        print("读取已关闭消息配置到文件完成")
+        print("读取用户配置到文件完成")
     else:
-        print("未找到已关闭消息配置文件")
+        print("未找用户消息配置文件")
 
 
 server = "ws://" + server_host
 # 是否调试模式
 websocket.enableTrace(False)
+# websocket.enableTrace(True)
 
 ws = websocket.WebSocketApp(server, on_open=on_open, on_message=on_message, on_error=on_error, on_close=on_close)

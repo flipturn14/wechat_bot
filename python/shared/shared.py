@@ -8,6 +8,7 @@ with open("./config.json", encoding="utf-8") as f:
 f.close()
 
 server_host = config["server_host"]
+chat_interval = config["chat_interval"]
 
 groupChatKey = config["groupChatKey"]
 groupChatKey4 = config["groupChatKey4"]

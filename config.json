@@ -1,5 +1,7 @@
 {
   "server_host": "127.0.0.1:5555",
+  "chat_interval": 120,
+
   "groupChatKey": "g",
   "groupChatKey4": "c",
   "grpCitationMode": true,
