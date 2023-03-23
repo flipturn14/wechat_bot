@@ -5,6 +5,28 @@
 
 使用基于 ChatGPT (非API-KEY调用) 、Stable Diffusion AI画图（本地部署） 与 官方微信hook接口 的 ChatGPT-3 / ChatGPT4 机器人。（本着开源想法，连Readme都是抄的）
 
+下面是私聊的自我介绍：
+
+"当前是关闭自动回复状态\n" \
+"如需启用自动回复请输入：启用\n" \
+"如需关闭自动回复请输入：关闭\n" \
+"您可以直接发送文字给我，默认使用ChatGPT-4 没有上下文关联；\n" \
+"如需要上下文，请在说话前增加g，增加t为生成图片\n" \
+"连续问的问题太多，会因为微信本身策略限制并提示我：[发送消息过于频繁，可稍后再试]\n" \
+"这样会造成我无法回复消息给您，甚至封号，所以请您不要连续提问太多问题，可以隔一段时间再试，谢谢。\n" \
+"您也可以尝试自动搭建，地址https://github.com/flipturn14/wechat_bot\n" \
+"如果感觉好用，请在github上点击一个star"
+
+下面是入群新人会自动发言的消息：
+
+"调用GPT对话请在文字前增加召唤字母\n" \
+"可用功能为c/g/t\n" \
+"c=ChatGPT-4 没有上下文关联\n" \
+"g=ChatGPT-3 支持上下文关联\n" \
+"t=生成图片" \
+"您也可以尝试自动搭建，地址https://github.com/flipturn14/wechat_bot\n" \
+"如果感觉好用，请在github上点击一个star"
+
 ###### 作者
 
 [FlipTurn (github.com)](https://github.com/flipturn14)
@@ -16,6 +38,7 @@
 - [x] ChatGPT-4不支持上下文问答
 - [x] 支持多线程 `Stable Diffusion` AI 画图功能，（需自己搭建，中文自动转换为英文）
 - [x] **使用官方微信软件执行，信息来源方面永不封禁**（据说）
+- [x] **同时使用人数过多，会被封号，我刚被封一个月**
 - [x] 在私聊中默认为GPT-4，支持使用关键字唤醒GPT-3
 - [x] 设置关键字在群聊中唤醒微信机器人
 - [x] GPT-3支持使用帮助文档
@@ -41,8 +64,10 @@
   "privateChatKey": "",
   // 在群聊回答前添加源问题格式
   "prvCitationMode": false,
+  // 群聊的管理员，可以使用群聊唤醒关键词加启用来启动群聊，群聊唤醒关键词加关闭来关闭群聊，避免刷屏
+  "group_admin": ["admin1","admin2"],
   
-  // 是否开启 Stable Diffusion 图片回复（仅英语）
+  // 是否开启 Stable Diffusion 图片回复
   "stableDiffRly": true,
   // 在群聊中设置唤醒 AI画图功能关键词
   "groupImgKey": "t",

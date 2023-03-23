@@ -18,7 +18,8 @@ prvCitationMode = config["prvCitationMode"]
 stableDiffRly = config["stableDiffRly"]
 groupImgKey = config["groupImgKey"]
 privateImgKey = config["privateImgKey"]
-
+# 群内默认管理员ID
+group_admin = config["group_admin"]
 
 # Signal Number
 HEART_BEAT = 5005

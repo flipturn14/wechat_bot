@@ -15,7 +15,7 @@ class Poe:
         }
         print(get_now() + "[" + self.wx_id + "]ask：" + prompt)
         try:
-            response = requests.request(url="http://localhost:8080", json=data, method="POST", timeout=60)
+            response = requests.request(url="http://localhost:8080", json=data, method="POST", timeout=90)
             reply = response.text
         except Exception as err:
             print(err)

@@ -15,21 +15,24 @@ from python.shared.shared import *
 global_thread = []
 # 屏蔽id集合，重启失效
 disable_ids = {}
-# 收到信息立即回复群聊集合
-auto_group = {}
-# 群内默认管理员ID
-group_admin = {}
 
 welcome_group = "调用GPT对话请在文字前增加召唤字母\n" \
                 "可用功能为c/g/t\n" \
                 "c=ChatGPT-4 没有上下文关联\n" \
                 "g=ChatGPT-3 支持上下文关联\n" \
-                "t=生成图片"
+                "t=生成图片" \
+                "您也可以尝试自动搭建，地址https://github.com/flipturn14/wechat_bot\n" \
+                "如果感觉好用，请在github上点击一个star"
 
-welcome_private = "您可以直接发送文字给我，默认使用ChatGPT-4 没有上下文关联；\n如需要上下文，请在说话前增加g，增加t为生成图片\n" \
+welcome_private = "当前是关闭自动回复状态\n" \
+                  "如需启用自动回复请输入：启用\n" \
+                  "如需关闭自动回复请输入：关闭\n" \
+                  "您可以直接发送文字给我，默认使用ChatGPT-4 没有上下文关联；\n" \
+                  "如需要上下文，请在说话前增加g，增加t为生成图片\n" \
                   "连续问的问题太多，会因为微信本身策略限制并提示我：[发送消息过于频繁，可稍后再试]\n" \
-                  "这样会造成我无法回复消息给您，甚至封号，所以请您不要连续提问太多问题，可以隔一段时间再试，谢谢。" \
-                  "如需关闭自动回复请输入：关闭，如需启用自动回复请输入：启用\n默认为关闭状态"
+                  "这样会造成我无法回复消息给您，甚至封号，所以请您不要连续提问太多问题，可以隔一段时间再试，谢谢。\n" \
+                  "您也可以尝试自动搭建，地址https://github.com/flipturn14/wechat_bot\n" \
+                  "如果感觉好用，请在github上点击一个star"
 
 
 def debug_switch():
@@ -109,27 +112,17 @@ def handle_recv_txt_msg(j):
     # 输出所有消息
     print(get_now() + nick + "：" + content)
     if is_room:  # 群内消息
-        if auto_group.get(room_id) is None:
-            auto_group[room_id] = "关闭"
         if wx_id in group_admin:
-            if content.startswith("g关闭"):
+            if content.startswith(groupChatKey + "关闭"):
                 disable_ids[room_id] = "close"
                 print(get_now() + "当前状态" + str(disable_ids.get(room_id)))
                 ws.send(send_txt_msg(text_string="已经关闭该群的回复，大家再见！", wx_id=room_id))
                 save_config()
                 return
-            elif content.startswith("g启用"):
+            elif content.startswith(groupChatKey + "启用"):
                 disable_ids[room_id] = "open"
                 ws.send(send_txt_msg(text_string="大家好，" + welcome_group, wx_id=room_id))
                 save_config()
-                return
-            elif content.startswith("燃烧吧小宇宙"):  # 谨慎开启，群内消息过接口会承载不了
-                auto_group[room_id] = "开启"
-                ws.send(send_txt_msg(text_string="已经开始燃烧", wx_id=room_id))
-                return
-            elif content.startswith("阿门"):
-                auto_group[room_id] = "关闭"
-                ws.send(send_txt_msg(text_string="火焰已经熄灭", wx_id=room_id))
                 return
     else:  # 个人消息
         if disable_ids.get(wx_id) is None:
@@ -139,17 +132,16 @@ def handle_recv_txt_msg(j):
         if content == "关闭":
             disable_ids[wx_id] = "close"
             print(get_now() + "当前状态" + str(disable_ids.get(wx_id)))
-            ws.send(send_txt_msg(text_string="已经关闭自动回复，如需恢复请输入启用", wx_id=wx_id))
+            ws.send(send_txt_msg(text_string="已经关闭自动回复，如需恢复请输入：启用", wx_id=wx_id))
             save_config()
             return
         elif content == "启用":
             disable_ids[wx_id] = "open"
-            ws.send(send_txt_msg(text_string=welcome_private, wx_id=wx_id))
+            ws.send(send_txt_msg(text_string="已经开启自动回复，如需停用请输入：关闭", wx_id=wx_id))
             save_config()
             return
-        elif content == "你好":
+        elif content == "你好" or content.startswith("在吗") or content.startswith("在么"):
             ws.send(send_txt_msg(text_string=welcome_private, wx_id=wx_id))
-            save_config()
             return
     # 已关闭群聊或关闭自动回复的，直接返回
     if disable_ids.get(room_id) == 'close' or disable_ids.get(wx_id) == 'close':
@@ -163,8 +155,7 @@ def handle_recv_txt_msg(j):
         img_que.put(ig)
     elif (content.startswith(privateChatKey) and not is_room) or (
             content.startswith(groupChatKey) and is_room) or (
-            content.startswith(groupChatKey4) and is_room) or (
-            auto_group.get(room_id) is not None and auto_group[room_id] == "开启"):
+            content.startswith(groupChatKey4) and is_room):
         if is_room:
             if content.startswith(groupChatKey):
                 replace = re.sub("^" + groupChatKey, "", content, 1)
@@ -213,8 +204,6 @@ def handle_other_msg(j):
     if content.endswith("加入了群聊"):
         nick = content.split('"邀请"')[1].split('"')[0]
         ws.send(send_txt_msg(text_string="欢迎" + nick + "入群，" + welcome_group, wx_id=room_id))
-    # elif content.startswith("以上是打招呼的内容"):
-    #     print("")
     elif content.endswith("刚刚把你添加到通讯录，现在可以开始聊天了。"):
         ws.send(send_txt_msg(text_string=welcome_private, wx_id=room_id))
 
@@ -234,8 +223,6 @@ def on_open(ws):
         global_thread.append(image_processor)
     load_config()
     print(get_now() + "启动成功")
-    # 通知微信号已进行重启
-    ws.send(send_txt_msg(text_string="启动完毕，已就绪", wx_id=""))
 
 
 def on_message(ws, message):
@@ -295,7 +282,7 @@ def load_config():
     with open("./data.json", encoding="utf-8") as file_object:
         disable_ids = json.load(file_object)
     file_object.close()
-    print("读取已关闭群组配置到文件完成", disable_ids)
+    print("读取已关闭群组配置到文件完成")
 
 
 server = "ws://" + server_host
