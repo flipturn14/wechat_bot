@@ -3,7 +3,7 @@
 
 
 
-使用基于 ChatGPT (非API-KEY调用) 、Stable Diffusion AI画图（本地部署） 与 官方微信hook接口 的 ChatGPT-3 / ChatGPT4
+使用基于 ChatGPT (非API-KEY调用) 、Stable Diffusion AI画图（需要自己本地部署） 与 官方微信hook接口 的 ChatGPT-3 / ChatGPT4
 机器人。（本着开源想法，连Readme都是抄的）
 
 下面是私聊的自我介绍：
@@ -15,7 +15,7 @@
 "如需要上下文，请在说话前增加g，增加t为生成图片\n" \
 "连续问的问题太多，会因为微信本身策略限制并提示我：[发送消息过于频繁，可稍后再试]\n" \
 "这样会造成我无法回复消息给您，甚至封号，所以请您不要连续提问太多问题，可以隔一段时间再试，谢谢。\n" \
-"您也可以尝试自动搭建，地址https://github.com/flipturn14/wechat_bot\n" \
+"您也可以尝试自己搭建，地址https://github.com/flipturn14/wechat_bot\n" \
 "如果感觉好用，请在github上点击一个star"
 
 下面是入群新人会自动发言的消息：
@@ -24,8 +24,8 @@
 "可用功能为c/g/t\n" \
 "c=ChatGPT-4 没有上下文关联\n" \
 "g=ChatGPT-3 支持上下文关联\n" \
-"t=生成图片" \
-"您也可以尝试自动搭建，地址https://github.com/flipturn14/wechat_bot\n" \
+"t=生成图片\n" \
+"您也可以尝试自己搭建，地址https://github.com/flipturn14/wechat_bot\n" \
 "如果感觉好用，请在github上点击一个star"
 
 ###### 作者
@@ -117,13 +117,13 @@
 
 **一切准备就绪，欢迎使用 Wechat_bot！**
 
-    没有限制、没有使用计数，也没有付费要求。 
+没有限制、没有使用计数，也没有付费要求。 
 
-    使用ChatGPT-3时，需要科学上网，自动生成邮箱登录Poe进行对话。
+使用ChatGPT-3时，需要科学上网，自动生成邮箱登录Poe进行对话。
 
-    使用ChatGPT-4时，会有500次的调用限额，可登录[steamship.com](https://www.steamship.com)注册账号，发送邮件至[support@steamship.com](support@steamship.com)进行解除限额。
+使用ChatGPT-4时，会有500次的调用限额，可登录[steamship.com](https://www.steamship.com)注册账号，发送邮件至[support@steamship.com](support@steamship.com)进行解除限额。
 
-    需要生成图片请自行安装webui并下载各种模型后启动，此处不进行讲解。
+需要生成图片请自行安装webui并下载各种模型后启动，此处不进行讲解。
 
 ## 常见问题解答
 
@@ -137,6 +137,10 @@
    ![image-20230221044543472](assets/wx.png)
 
 ## 日志
+- 2023年3月24日
+1. 增加对话时间间隔限制，避免同时聊天人数过多，配置文件新增`chat_interval`配置项，适用于群聊和私聊
+2. 增加管理员功能，配置文件中增加管理员，管理员可使用命令[关键词]添加[昵称]来增加VIP人员，该人员不受时间间隔限制，或使用命令[关键词]删除[昵称]来增加VIP人员，该人员受到时间间隔限制。举例：g添加FlipTurn
+3. 拆分函数
 
 - 2023年3月23日
 

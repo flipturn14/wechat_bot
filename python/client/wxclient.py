@@ -22,8 +22,8 @@ welcome_group = "调用GPT对话请在文字前增加召唤字母\n" \
                 "可用功能为c/g/t\n" \
                 "c=ChatGPT-4 没有上下文关联\n" \
                 "g=ChatGPT-3 支持上下文关联\n" \
-                "t=生成图片" \
-                "您也可以尝试自动搭建，地址https://github.com/flipturn14/wechat_bot\n" \
+                "t=生成图片\n" \
+                "您也可以尝试自己搭建，地址https://github.com/flipturn14/wechat_bot\n" \
                 "如果感觉好用，请在github上点击一个star"
 
 welcome_private = "当前是关闭自动回复状态\n" \
@@ -33,7 +33,7 @@ welcome_private = "当前是关闭自动回复状态\n" \
                   "如需要上下文，请在说话前增加g，增加t为生成图片\n" \
                   "连续问的问题太多，会因为微信本身策略限制并提示我：[发送消息过于频繁，可稍后再试]\n" \
                   "这样会造成我无法回复消息给您，甚至封号，所以请您不要连续提问太多问题，可以隔一段时间再试，谢谢。\n" \
-                  "您也可以尝试自动搭建，地址https://github.com/flipturn14/wechat_bot\n" \
+                  "您也可以尝试自己搭建，地址https://github.com/flipturn14/wechat_bot\n" \
                   "如果感觉好用，请在github上点击一个star"
 
 
@@ -113,95 +113,41 @@ def handle_recv_txt_msg(j):
     # ----------基础信息end----------
     # 输出所有消息
     print(get_now() + nick + "：" + content)
-    # 添加VIP用户
-    if wx_id in group_admin:
-        if content.startswith(groupChatKey + "添加"):
-            add_wx_id = re.sub("^" + groupChatKey + "添加", "", content, 1)
-            if user_configs.get(add_wx_id) is not None:
-                user_configs[add_wx_id]['vip'] = True
-                ws.send(send_txt_msg(text_string="添加成功，该用户无限制", wx_id=wx_id))
-                save_config()
-            else:
-                ws.send(send_txt_msg(text_string="此用户不存在", wx_id=wx_id))
-            return
-        elif content.startswith(groupChatKey + "删除"):
-            add_wx_id = re.sub("^" + groupChatKey + "删除", "", content, 1)
-            if user_configs.get(add_wx_id) is not None:
-                user_configs[add_wx_id]['vip'] = False
-                ws.send(send_txt_msg(text_string="删除成功，该用户受限制", wx_id=wx_id))
-                save_config()
-            else:
-                ws.send(send_txt_msg(text_string="此用户不存在", wx_id=wx_id))
-            return
-    if is_room:  # 群内消息
-        if user_configs.get(room_id) is None:
-            print(get_now() + nick + "配置文件没有存储该群聊信息，默认关闭。保存至文件")
-            user_configs[room_id] = {
-                "disable": True,
-                "last_time": time.time(),
-                "vip": False
-            }
-            save_config()
-        if wx_id in group_admin:
-            if content.startswith(groupChatKey + "关闭"):
-                user_configs[room_id]["disable"] = True
-                ws.send(send_txt_msg(text_string="已经关闭该群的回复，大家再见！", wx_id=room_id))
-                save_config()
-                return
-            elif content.startswith(groupChatKey + "启用"):
-                user_configs[room_id]["disable"] = False
-                ws.send(send_txt_msg(text_string="大家好，" + welcome_group, wx_id=room_id))
-                save_config()
-                return
-    else:  # 个人消息
-        if user_configs.get(wx_id) is None:
-            print(get_now() + nick + "配置文件没有存储该用户信息，默认关闭。保存至文件")
-            user_configs[wx_id] = {
-                "disable": True,
-                "last_time": time.time(),
-                "vip": False
-            }
-            save_config()
-            ws.send(send_txt_msg(text_string=welcome_private, wx_id=wx_id))
-            return
-        if content == "关闭":
-            user_configs[wx_id]["disable"] = True
-            ws.send(send_txt_msg(text_string="已经关闭自动回复，如需恢复请输入：启用", wx_id=wx_id))
-            save_config()
-            return
-        elif content == "启用":
-            user_configs[wx_id]["disable"] = False
-            ws.send(send_txt_msg(text_string="已经开启自动回复，如需停用请输入：关闭", wx_id=wx_id))
-            save_config()
-            return
-        elif content == "你好" or content.startswith("在吗") or content.startswith("在么"):
-            ws.send(send_txt_msg(text_string=welcome_private, wx_id=wx_id))
-            return
-    # 已关闭群聊或关闭自动回复的，直接返回
+    # 判断对话内容是否为添加VIP
+    if add_vip(wx_id, content):
+        return
+    # 判断当前状态是否为禁止对话
+    if change_status(wx_id, nick, content, is_room, room_id):
+        return
+    # 已关闭群聊的room_id或关闭自动回复的wxid，直接返回
     if (is_room and user_configs[room_id]["disable"]) or \
-            user_configs.get(wx_id) is None or \
-            user_configs[wx_id]["disable"]:
+            (is_room is False and user_configs.get(wx_id) is None) or \
+            (is_room is False and user_configs[wx_id]["disable"]):
+        # if is_room and user_configs[room_id]["disable"]:
+        #     print("已关闭群聊")
+        # elif is_room is False and user_configs.get(wx_id) is None:
+        #     print("没有找到用户信息")
+        # elif is_room is False and user_configs[wx_id]["disable"]:
+        #     print("已关闭自动回复")
+        # else:
+        #     print("未捕获")
         return
-    # 计算聊天间隔，不判断VIP用户以及管理员
-    last_time = user_configs[wx_id]["last_time"]
-    interval = int(time.time() - last_time)
-    if interval < chat_interval and wx_id not in group_admin and user_configs[wx_id]["vip"] is not True:
-        if not is_room:
-            if interval > chat_interval / 2:
-                ws.send(send_txt_msg(
-                    text_string=("小于设定提问间隔时间%d秒，还需等待%d秒" % (chat_interval, (chat_interval - interval))),
-                    wx_id=wx_id))
-        return
-    user_configs[wx_id]["last_time"] = time.time()
+
     # 启用了生成图片并且起始关键字一致
     if stableDiffRly and (
             (content.startswith(privateImgKey) and not is_room) or (content.startswith(groupImgKey) and is_room)):
         content = re.sub("^" + (groupImgKey if is_room else privateImgKey), "", content, 1)
+        if check_interval(wx_id, content, is_room, room_id):
+            return
+        user_configs[wx_id]["last_time"] = time.time()
         ig = ImgTask(ws, content, wx_id, room_id, is_room)
         img_que.put(ig)
     elif (content.startswith(privateChatKey) and not is_room) or (
             content.startswith(groupChatKey) and is_room) or (
             content.startswith(groupChatKey4) and is_room):
+        if check_interval(wx_id, content, is_room, room_id):
+            return
+        user_configs[wx_id]["last_time"] = time.time()
         if is_room:
             if content.startswith(groupChatKey):
                 replace = re.sub("^" + groupChatKey, "", content, 1)
@@ -227,11 +173,118 @@ def handle_recv_txt_msg(j):
     find_nick(wx_id, room_id)
 
 
+def change_status(wx_id, nick, content, is_room, room_id):
+    if is_room:  # 群内消息
+        if user_configs.get(room_id) is None:
+            print(get_now() + nick + "配置文件没有存储该群聊信息，默认关闭。保存至文件")
+            init_user(room_id)
+        if wx_id in group_admin:
+            if content.startswith(groupChatKey + "关闭"):
+                user_configs[room_id]["disable"] = True
+                ws.send(send_txt_msg(text_string="已经关闭该群的回复，大家再见！", wx_id=room_id))
+                save_config()
+                return True
+            elif content.startswith(groupChatKey + "开启"):
+                user_configs[room_id]["disable"] = False
+                ws.send(send_txt_msg(text_string="大家好，" + welcome_group, wx_id=room_id))
+                save_config()
+                return True
+    else:  # 个人消息
+        if user_configs.get(wx_id) is None:
+            print(get_now() + nick + "配置文件没有存储该用户信息，默认关闭。保存至文件")
+            init_user(wx_id)
+            ws.send(send_txt_msg(text_string=welcome_private, wx_id=wx_id))
+            return True
+        if content == "关闭":
+            user_configs[wx_id]["disable"] = True
+            ws.send(send_txt_msg(text_string="已经关闭自动回复，如需恢复请输入：开启", wx_id=wx_id))
+            save_config()
+            return True
+        elif content == "开启":
+            user_configs[wx_id]["disable"] = False
+            ws.send(send_txt_msg(text_string="已经开启自动回复，如需停用请输入：关闭", wx_id=wx_id))
+            save_config()
+            return True
+        elif content == "你好" or content.startswith("在吗") or content.startswith("在么"):
+            ws.send(send_txt_msg(text_string=welcome_private, wx_id=wx_id))
+            return True
+    return False
+
+
+def add_vip(wx_id, content):
+    # 添加VIP用户
+    if wx_id in group_admin:
+        if content.startswith(groupChatKey + "添加"):
+            nick = re.sub("^" + groupChatKey + "添加", "", content, 1)
+            wx_id = get_wx_id(nick)
+            if user_configs.get(wx_id) is not None:
+                user_configs[wx_id]['vip'] = True
+                ws.send(send_txt_msg(text_string="添加成功，该用户无限制", wx_id=wx_id))
+                save_config()
+            else:
+                ws.send(send_txt_msg(text_string="此用户不存在", wx_id=wx_id))
+            return True
+        elif content.startswith(groupChatKey + "删除"):
+            nick = re.sub("^" + groupChatKey + "删除", "", content, 1)
+            wx_id = get_wx_id(nick)
+            if user_configs.get(wx_id) is not None:
+                user_configs[wx_id]['vip'] = False
+                ws.send(send_txt_msg(text_string="删除成功，该用户受限制", wx_id=wx_id))
+                save_config()
+            else:
+                ws.send(send_txt_msg(text_string="此用户不存在", wx_id=wx_id))
+            return True
+    return False
+
+
+def init_user(wx_id):
+    user_configs[wx_id] = {
+        "disable": True,
+        "last_time": time.time() - chat_interval - 1,
+        "vip": False
+    }
+    save_config()
+
+
+def check_interval(wx_id, content, is_room, room_id):
+    # 计算聊天间隔，不判断VIP用户以及管理员
+    if user_configs.get(wx_id) is None:
+        init_user(wx_id)
+    last_time = user_configs[wx_id]["last_time"]
+    interval = int(time.time() - last_time)
+    if interval < chat_interval and (wx_id not in group_admin and user_configs[wx_id]["vip"] is not True):
+        tip_content = ("小于设定提问间隔时间%d秒，还需等待%d秒" % (chat_interval, (chat_interval - interval)))
+        # if interval < chat_interval:
+        #     print(("小于设定提问间隔时间%d秒，还需等待%d秒" % (chat_interval, (chat_interval - interval))))
+        # if wx_id not in group_admin:
+        #     print("不是管理员")
+        # if user_configs[wx_id]["vip"] is not True:
+        #     print("不是VIP")
+        if is_room:
+            nick = find_nick(wx_id, room_id)
+            tip_content = nick + "：" + content + "\n--------------------\n" + tip_content
+            ws.send(send_txt_msg(text_string=tip_content, wx_id=room_id))
+        else:
+            ws.send(send_txt_msg(text_string=tip_content, wx_id=wx_id))
+        return True
+    return False
+
+
+def get_wx_id(nick):
+    for wx_id, value in global_wx_dict.items():
+        if value == nick:
+            return wx_id
+    return nick
+
+
 def find_nick(wx_id, room_id):
     if wx_id is not None:
         nick = global_wx_dict.get(wx_id)
         if nick is None:
             ws.send(get_chat_nick_p(wx_id, room_id))
+            return wx_id
+        else:
+            return nick
 
 
 def handle_recv_pic_msg(j):
@@ -314,12 +367,12 @@ def on_close(ws):
 
 
 def save_config():
-    print("保存已关闭聊天id配置到文件")
+    # print("保存已关闭聊天id配置到文件")
     data = json.dumps(user_configs)
     with open("./data.json", "wb") as file_object:
         file_object.write(data.encode('utf-8'))
     file_object.close()
-    print("保存已关闭聊天id配置到文件完成")
+    print("保存用户配置到文件完成")
 
 
 def load_config():
