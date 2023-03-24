@@ -27,7 +27,7 @@ welcome_group = "调用GPT对话请在文字前增加召唤字母\n" \
                 "如果感觉好用，请在github上点击一个star"
 
 welcome_private = "当前是关闭自动回复状态\n" \
-                  "如需启用自动回复请输入：启用\n" \
+                  "如需启用自动回复请输入：开启\n" \
                   "如需关闭自动回复请输入：关闭\n" \
                   "您可以直接发送文字给我，默认使用ChatGPT-4 没有上下文关联；\n" \
                   "如需要上下文，请在说话前增加g，增加t为生成图片\n" \
@@ -303,7 +303,7 @@ def handle_other_msg(j):
     if content.endswith("加入了群聊"):
         nick = content.split('"邀请"')[1].split('"')[0]
         ws.send(send_txt_msg(text_string="欢迎" + nick + "入群，" + welcome_group, wx_id=room_id))
-    elif content.endswith("刚刚把你添加到通讯录，现在可以开始聊天了。"):
+    elif content.endswith("现在可以开始聊天了。"):
         ws.send(send_txt_msg(text_string=welcome_private, wx_id=room_id))
 
 
