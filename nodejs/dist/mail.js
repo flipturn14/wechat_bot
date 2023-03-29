@@ -1,7 +1,7 @@
 import fetch from "cross-fetch";
 import { readFileSync, writeFile } from "fs";
 const BASEURL = 'https://api.guerrillamail.com/ajax.php';
-const createNewEmail2 = async (wx_id) => {
+const createNewEmail = async (wx_id) => {
     const name = "flipturn" + Math.random();
     const response = await fetch(`https://maildrop.cc/page-data/inbox/page-data.json?mailbox=` + name);
     const response_json = await response.json();
@@ -47,6 +47,7 @@ const getLatestEmail = async (sid_token) => {
             await new Promise(r => setTimeout(r, 1000));
             emailList = await getEmailList2(sid_token);
             emailListLength = emailList.list.length;
+            console.log("emailListLength = " + emailListLength);
             if (emailListLength > 0) {
                 break;
             }
@@ -83,4 +84,4 @@ const getPoeOTPCode = async (sid_token) => {
     console.log("OTP CODE: " + code);
     return code;
 };
-export { createNewEmail2, getLatestEmail, getPoeOTPCode };
+export { createNewEmail, getLatestEmail, getPoeOTPCode };

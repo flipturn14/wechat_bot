@@ -1,6 +1,5 @@
 import os.path
 import re
-import time
 
 import websocket
 
@@ -9,8 +8,9 @@ from python.basic.send import send_txt_msg
 from python.basic.task import global_wx_dict, ImgTask, ChatTask
 from python.basic.tools import get_now
 from python.multithread.threads import img_que, chat_que, Processor
-from python.revChat.gpt4 import Gpt4
 from python.revChat.poe import Poe
+from python.revChat.xeasy import Xeasy
+from python.revChat.yqcloud import YQcloud
 from python.shared.shared import *
 
 # 公共线程
@@ -19,18 +19,15 @@ global_thread = []
 user_configs = {}
 
 welcome_group = "调用GPT对话请在文字前增加召唤字母\n" \
-                "可用功能为c/g/t\n" \
-                "c=ChatGPT-4 没有上下文关联\n" \
-                "g=ChatGPT-3 支持上下文关联\n" \
-                "t=生成图片\n" \
+                "可用功能为g/c\n" \
+                "g=支持上下文关联\n" \
+                "c=不支持上下文关联\n" \
                 "您也可以尝试自己搭建，地址https://github.com/flipturn14/wechat_bot\n" \
                 "如果感觉好用，请在github上点击一个star"
 
 welcome_private = "当前是关闭自动回复状态\n" \
                   "如需启用自动回复请输入：开启\n" \
                   "如需关闭自动回复请输入：关闭\n" \
-                  "您可以直接发送文字给我，默认使用ChatGPT-4 没有上下文关联；\n" \
-                  "如需要上下文，请在说话前增加g，增加t为生成图片\n" \
                   "连续问的问题太多，会因为微信本身策略限制并提示我：[发送消息过于频繁，可稍后再试]\n" \
                   "这样会造成我无法回复消息给您，甚至封号，所以请您不要连续提问太多问题，可以隔一段时间再试，谢谢。\n" \
                   "您也可以尝试自己搭建，地址https://github.com/flipturn14/wechat_bot\n" \
@@ -154,18 +151,20 @@ def handle_recv_txt_msg(j):
             else:
                 replace = re.sub("^" + groupChatKey4, "", content, 1)
             if content.startswith(groupChatKey):
-                print(get_now() + "[" + room_id + "]群聊，Poe")
-                chatbot = Poe(room_id)
+                print(get_now() + "[" + room_id + "]群聊，XEasy")
+                chatbot = Xeasy(room_id)
             else:
-                print(get_now() + "[" + room_id + "]群聊，GPT4")
-                chatbot = Gpt4(room_id)
+                print(get_now() + "[" + room_id + "]群聊，YQcloud")
+                chatbot = YQcloud(room_id)
         else:
             replace = re.sub("^" + privateChatKey, "", content, 1)
-            print(get_now() + "[" + wx_id + "]新创建微信信息，私聊")
             if content.startswith(groupChatKey):
-                chatbot = Poe(wx_id)
+                print(get_now() + "[" + wx_id + "]私聊，XEasy")
+                chatbot = Xeasy(wx_id)
             else:
-                chatbot = Gpt4(wx_id)
+                replace = re.sub("^" + groupChatKey, "", content, 1)
+                print(get_now() + "[" + wx_id + "]私聊，YQcloud")
+                chatbot = YQcloud(wx_id)
         # 创建聊天任务并放入消息队列
         ct = ChatTask(ws, replace, chatbot, wx_id, room_id, is_room, is_citation)
         chat_que.put(ct)
@@ -208,6 +207,8 @@ def change_status(wx_id, nick, content, is_room, room_id):
         elif content == "你好" or content.startswith("在吗") or content.startswith("在么"):
             ws.send(send_txt_msg(text_string=welcome_private, wx_id=wx_id))
             return True
+        elif user_configs[wx_id]["disable"]:
+            ws.send(send_txt_msg(text_string=welcome_private, wx_id=wx_id))
     return False
 
 

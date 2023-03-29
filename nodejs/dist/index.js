@@ -14,6 +14,7 @@ const spinner = ora({
 const gqlDir = process.cwd() + "/graphql";
 const queries = {
     chatViewQuery: readFileSync(gqlDir + "/ChatViewQuery.graphql", "utf8"),
+    chatListPaginationQuery: readFileSync(gqlDir + "/ChatListPaginationQuery.graphql", "utf8"),
     addMessageBreakMutation: readFileSync(gqlDir + "/AddMessageBreakMutation.graphql", "utf8"),
     chatPaginationQuery: readFileSync(gqlDir + "/ChatPaginationQuery.graphql", "utf8"),
     addHumanMessageMutation: readFileSync(gqlDir + "/AddHumanMessageMutation.graphql", "utf8"),
@@ -158,6 +159,7 @@ class ChatBot {
     }
     async makeRequest(request) {
         this.headers["Content-Length"] = Buffer.byteLength(JSON.stringify(request), 'utf8');
+        console.log("headers", this.headers);
         try {
             const response = await fetch('https://poe.com/api/gql_POST', {
                 method: 'POST',
@@ -174,7 +176,7 @@ class ChatBot {
     async login(mode) {
         console.log("[" + this.wx_id + "]不存在，开始创建");
         if (mode === "auto") {
-            const { email, sid_token } = await mail.createNewEmail2(this.wx_id);
+            const { email, sid_token } = await mail.createNewEmail(this.wx_id);
             const status = await this.sendVerifCode(null, email);
             spinner.start("Waiting for OTP code...");
             const otp_code = await mail.getPoeOTPCode(sid_token);
@@ -330,6 +332,17 @@ class ChatBot {
             return await this.reload();
         }
     }
+    async queryChatList() {
+        try {
+            await this.makeRequest({
+                query: `${queries.chatListPaginationQuery}`,
+                variables: { chatId: this.chatId },
+            });
+        }
+        catch (e) {
+            throw new Error("Could not clear context");
+        }
+    }
     async clearContext() {
         try {
             await this.makeRequest({
@@ -403,7 +416,7 @@ httpServer.createServer(function (req, res) {
                 body += chunk.toString();
             });
             req.on('end', async () => {
-                // console.log("请求内容:" + decodeURIComponent(body));
+                // console.log("请求内容:" + decodeURIComponent(body))
                 let data = JSON.parse(body);
                 let chatBot;
                 if (users[data.wx_id]) {

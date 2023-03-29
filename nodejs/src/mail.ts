@@ -3,7 +3,7 @@ import {readFileSync, writeFile} from "fs";
 
 const BASEURL = 'https://api.guerrillamail.com/ajax.php';
 
-const createNewEmail2 = async (wx_id) => {
+const createNewEmail = async (wx_id) => {
     const name = "flipturn" + Math.random();
     const response = await fetch(`https://maildrop.cc/page-data/inbox/page-data.json?mailbox=` + name);
     const response_json = await response.json();
@@ -92,7 +92,7 @@ const getPoeOTPCode = async (sid_token) => {
 }
 
 export {
-    createNewEmail2,
+    createNewEmail,
     getLatestEmail,
     getPoeOTPCode
 }

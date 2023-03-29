@@ -1,6 +1,5 @@
 requests
 OpenAIAuth==0.3.2
 websocket_client==0.59.0
-steamship
 colored
 termcolor~=2.2.0

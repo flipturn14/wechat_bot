@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import json
+import sys
 import time
 
 # server config
@@ -7,7 +8,12 @@ with open("./config.json", encoding="utf-8") as f:
     config = json.load(f)
 f.close()
 
-server_host = config["server_host"]
+# server_host = config["server_host"]
+server_host = "127.0.0.1:5555"
+if len(sys.argv) > 1:
+    if sys.argv[1] == "2":
+        server_host = "127.0.0.1:5556"
+print("监听地址", server_host)
 chat_interval = config["chat_interval"]
 
 groupChatKey = config["groupChatKey"]
