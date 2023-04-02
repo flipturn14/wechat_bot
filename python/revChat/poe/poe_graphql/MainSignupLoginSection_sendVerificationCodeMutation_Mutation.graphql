@@ -1,0 +1,9 @@
+mutation MainSignupLoginSection_sendVerificationCodeMutation_Mutation(
+    $emailAddress: String
+    $phoneNumber: String
+) {
+    sendVerificationCode(verificationReason: login, emailAddress: $emailAddress, phoneNumber: $phoneNumber) {
+        status
+        errorMessage
+    }
+}

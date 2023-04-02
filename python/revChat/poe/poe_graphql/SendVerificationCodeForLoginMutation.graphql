@@ -1,13 +1,13 @@
-mutation SignupWithVerificationCodeMutation(
-    $verificationCode: String!
+mutation SendVerificationCodeForLoginMutation(
     $emailAddress: String
     $phoneNumber: String
 ) {
-    signupWithVerificationCode(
-        verificationCode: $verificationCode
+    sendVerificationCode(
+        verificationReason: login
         emailAddress: $emailAddress
         phoneNumber: $phoneNumber
     ) {
         status
+        errorMessage
     }
 }

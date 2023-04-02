@@ -8,7 +8,8 @@ from python.basic.send import send_txt_msg
 from python.basic.task import global_wx_dict, ImgTask, ChatTask
 from python.basic.tools import get_now
 from python.multithread.threads import img_que, chat_que, Processor
-from python.revChat.poe import Poe
+
+from python.revChat.poe.poe import Client
 from python.revChat.xeasy import Xeasy
 from python.revChat.yqcloud import YQcloud
 from python.shared.shared import *
@@ -141,6 +142,7 @@ def handle_recv_txt_msg(j):
         img_que.put(ig)
     elif (content.startswith(privateChatKey) and not is_room) or (
             content.startswith(groupChatKey) and is_room) or (
+            content.startswith(groupChatKey3) and is_room) or (
             content.startswith(groupChatKey4) and is_room):
         if check_interval(wx_id, content, is_room, room_id):
             return
@@ -148,23 +150,31 @@ def handle_recv_txt_msg(j):
         if is_room:
             if content.startswith(groupChatKey):
                 replace = re.sub("^" + groupChatKey, "", content, 1)
+            elif content.startswith(groupChatKey3):
+                replace = re.sub("^" + groupChatKey3, "", content, 1)
             else:
                 replace = re.sub("^" + groupChatKey4, "", content, 1)
             if content.startswith(groupChatKey):
-                print(get_now() + "[" + room_id + "]群聊，XEasy")
-                chatbot = Xeasy(room_id)
-            else:
+                print(get_now() + "[" + room_id + "]群聊，Poe")
+                chatbot = Client(room_id)
+            elif content.startswith(groupChatKey3):
                 print(get_now() + "[" + room_id + "]群聊，YQcloud")
                 chatbot = YQcloud(room_id)
+            else:
+                print(get_now() + "[" + room_id + "]群聊，XEasy")
+                chatbot = Xeasy(room_id)
         else:
             replace = re.sub("^" + privateChatKey, "", content, 1)
-            if content.startswith(groupChatKey):
+            if content.startswith(groupChatKey4):
                 print(get_now() + "[" + wx_id + "]私聊，XEasy")
                 chatbot = Xeasy(wx_id)
-            else:
-                replace = re.sub("^" + groupChatKey, "", content, 1)
+            elif content.startswith(groupChatKey3):
                 print(get_now() + "[" + wx_id + "]私聊，YQcloud")
                 chatbot = YQcloud(wx_id)
+            else:
+                replace = re.sub("^" + groupChatKey3, "", content, 1)
+                print(get_now() + "[" + wx_id + "]私聊，Poe")
+                chatbot = Client(wx_id)
         # 创建聊天任务并放入消息队列
         ct = ChatTask(ws, replace, chatbot, wx_id, room_id, is_room, is_citation)
         chat_que.put(ct)
@@ -303,6 +313,9 @@ def handle_other_msg(j):
     content: str = json["content"].strip()
     if content.endswith("加入了群聊"):
         nick = content.split('"邀请"')[1].split('"')[0]
+        ws.send(send_txt_msg(text_string="欢迎" + nick + "入群，" + welcome_group, wx_id=room_id))
+    elif content.endswith("分享的二维码加入群聊"):
+        nick = content.split('"')[1]
         ws.send(send_txt_msg(text_string="欢迎" + nick + "入群，" + welcome_group, wx_id=room_id))
     elif content.endswith("现在可以开始聊天了。"):
         ws.send(send_txt_msg(text_string=welcome_private, wx_id=room_id))

@@ -6,27 +6,9 @@
 使用基于 ChatGPT (非API-KEY调用) 、Stable Diffusion AI画图（需要自己本地部署） 与 官方微信hook接口 的 ChatGPT-3 / ChatGPT4
 机器人。（本着开源想法，连Readme都是抄的）
 
-下面是私聊的自我介绍：
+私聊加好友后默认不开启，对话会进行提示
 
-"当前是关闭自动回复状态\n" \
-"如需启用自动回复请输入：启用\n" \
-"如需关闭自动回复请输入：关闭\n" \
-"您可以直接发送文字给我，默认使用ChatGPT-4 没有上下文关联；\n" \
-"如需要上下文，请在说话前增加g，增加t为生成图片\n" \
-"连续问的问题太多，会因为微信本身策略限制并提示我：[发送消息过于频繁，可稍后再试]\n" \
-"这样会造成我无法回复消息给您，甚至封号，所以请您不要连续提问太多问题，可以隔一段时间再试，谢谢。\n" \
-"您也可以尝试自己搭建，地址https://github.com/flipturn14/wechat_bot\n" \
-"如果感觉好用，请在github上点击一个star"
-
-下面是入群新人会自动发言的消息：
-
-"调用GPT对话请在文字前增加召唤字母\n" \
-"可用功能为c/g/t\n" \
-"c=ChatGPT-4 没有上下文关联\n" \
-"g=ChatGPT-3 支持上下文关联\n" \
-"t=生成图片\n" \
-"您也可以尝试自己搭建，地址https://github.com/flipturn14/wechat_bot\n" \
-"如果感觉好用，请在github上点击一个star"
+入群新人会自动欢迎。
 
 ###### 作者
 
@@ -36,13 +18,10 @@
 
 - [x] 支持多线程对话
 - [x] ChatGPT-3支持上下文问答
-- [x] ChatGPT-4不支持上下文问答
 - [x] 支持多线程 `Stable Diffusion` AI 画图功能，（需自己搭建，中文自动转换为英文）
 - [x] **使用官方微信软件执行，信息来源方面永不封禁**（据说）
 - [x] **同时使用人数过多，会被封号，我刚被封一个月**
-- [x] 在私聊中默认为GPT-4，支持使用关键字唤醒GPT-3
 - [x] 设置关键字在群聊中唤醒微信机器人
-- [x] GPT-3支持使用帮助文档
 - [x] 设置关键字以重置之前的对话
 - [x] 重新生成答案
 - [x] 回滚对话
@@ -99,9 +78,9 @@
 
       ![image-20230221044609319](assets/image-20230221044609319.png)
 
-4. 登录[steamship.com](https://www.steamship.com)注册账号， 使用ChatGPT-4会用到。
+4. 双开时打开一个微信登录后，打开微信DLL注入器点击注入，再打开一个微信后使用FunTool修改端口后点击Start
 
-5. 在 `config.json` 目录下填写 JSON 文件，您需要根据自己的偏好配置自定义选项。
+5. 需要在 `config.json` 目录下填写 JSON 文件，您需要根据自己的偏好配置自定义选项。
 
 6. 切换至根目录，运行以下命令启动服务：
 
@@ -109,19 +88,12 @@
    python main.py
    ```
 
-7. 启动nodejs，切换至nodejs/dist目录，使用如下命令启动：
-
-   ```
-   node index.js
-   ```
 
 **一切准备就绪，欢迎使用 Wechat_bot！**
 
-没有限制、没有使用计数，也没有付费要求。 
+**没有限制、没有使用计数，也没有付费要求。** 
 
-使用ChatGPT-3时，需要科学上网，自动生成邮箱登录Poe进行对话。
-
-使用ChatGPT-4时，会有500次的调用限额，可登录[steamship.com](https://www.steamship.com)注册账号，发送邮件至[support@steamship.com](support@steamship.com)进行解除限额。
+需要科学上网，自动生成邮箱登录Poe进行对话。
 
 需要生成图片请自行安装webui并下载各种模型后启动，此处不进行讲解。
 
@@ -137,6 +109,9 @@
    ![image-20230221044543472](assets/wx.png)
 
 ## 日志
+- 2023年4月02日
+1. 恢复使用Poe，修改为Python版本，并会自动进行注册
+2. 增加多个对话对接地址
 - 2023年3月24日
 1. 增加对话时间间隔限制，避免同时聊天人数过多，配置文件新增`chat_interval`配置项，适用于群聊和私聊
 2. 增加管理员功能，配置文件中增加管理员，管理员可使用命令[关键词]添加[昵称]来增加VIP人员，该人员不受时间间隔限制，或使用命令[关键词]删除[昵称]来增加VIP人员，该人员受到时间间隔限制。举例：g添加FlipTurn
@@ -154,4 +129,4 @@
 
 - [https://github.com/SnapdragonLee/ChatGPT-weBot](https://github.com/SnapdragonLee/ChatGPT-weBot)
 - [https://github.com/muharamdani/poe](https://github.com/muharamdani/poe)
-
+- [https://github.com/ading2210/poe-api](https://github.com/ading2210/poe-api)

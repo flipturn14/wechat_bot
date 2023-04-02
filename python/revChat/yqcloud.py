@@ -27,7 +27,8 @@ class YQcloud:
             print("reply = " + reply)
             content_arr = reply.split("\n")
             if len(content_arr) > 1:
-                reply = content_arr[2]
+                content_arr.pop(0)
+                reply = '\n'.join(content_arr)
         except Exception as err:
             print(err)
             reply = "请求异常"

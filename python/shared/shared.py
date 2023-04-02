@@ -17,6 +17,7 @@ print("监听地址", server_host)
 chat_interval = config["chat_interval"]
 
 groupChatKey = config["groupChatKey"]
+groupChatKey3 = config["groupChatKey3"]
 groupChatKey4 = config["groupChatKey4"]
 grpCitationMode = config["grpCitationMode"]
 privateChatKey = config["privateChatKey"]

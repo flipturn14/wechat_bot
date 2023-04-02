@@ -1,4 +1,4 @@
-mutation LoginWithVerificationCodeMutation(
+mutation SignupOrLoginWithCodeSection_loginWithVerificationCodeMutation_Mutation(
     $verificationCode: String!
     $emailAddress: String
     $phoneNumber: String
@@ -9,5 +9,6 @@ mutation LoginWithVerificationCodeMutation(
         phoneNumber: $phoneNumber
     ) {
         status
+        errorMessage
     }
 }

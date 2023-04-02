@@ -1,4 +1,4 @@
-mutation SignupWithVerificationCodeMutation(
+mutation SignupOrLoginWithCodeSection_signupWithVerificationCodeMutation_Mutation(
     $verificationCode: String!
     $emailAddress: String
     $phoneNumber: String
