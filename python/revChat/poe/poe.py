@@ -87,6 +87,7 @@ def request_with_retries(method, *args, **kwargs):
 
 class Mail:
     BASEURL = 'https://api.guerrillamail.com/ajax.php'
+    cookie = ""
 
     def __init__(self, wx_id):
         self.wx_id = wx_id
@@ -94,11 +95,15 @@ class Mail:
 
     def create_new_email(self):
         print(get_now() + "[" + self.wx_id + "]创建邮箱")
+        response = self.session.post("https://moakt.com/zh/inbox", allow_redirects=False)
+        self.cookie = "tm_session=" + response.cookies.get("tm_session")
+        print("cookie=" + self.cookie)
         result = self.session.post("https://moakt.com/zh/inbox/change", headers={
-            "cookie": "__utma=213295240.27832974.1680424543.1680424543.1680424543.1; __utmc=213295240; __utmz=213295240.1680424543.1.1.utmcsr=google|utmccn=(organic)|utmcmd=organic|utmctr=(not%20provided); __utmt=1; tm_session=e71a4178182ff61dba8a95d8dd1aaf17; __utmb=213295240.7.10.1680424543",
+            "cookie": self.cookie,
             "x-requested-with": "XMLHttpRequest"
         })
         data = json.loads(result.text)
+        print("data=", data)
         email_address = data["data"]["address"]["email"]
         print(get_now() + "[" + self.wx_id + "]邮箱地址：[" + email_address + "]")
         return email_address
@@ -106,7 +111,7 @@ class Mail:
     def get_email_list(self):
         self.session.headers.clear()
         response = self.session.get('https://moakt.com/zh/inbox', headers={
-            "cookie": "__utma=213295240.27832974.1680424543.1680424543.1680424543.1; __utmc=213295240; __utmz=213295240.1680424543.1.1.utmcsr=google|utmccn=(organic)|utmcmd=organic|utmctr=(not%20provided); __utmt=1; tm_session=e71a4178182ff61dba8a95d8dd1aaf17; __utmb=213295240.7.10.1680424543"
+            "cookie": self.cookie
         })
         # print("html = ", response.text)
         html = response.text
@@ -135,7 +140,7 @@ class Mail:
         url = ("https://moakt.com/zh/email/%s/content/" % id)
         # print("url = " + url)
         response = self.session.get(url, headers={
-            "cookie": "__utma=213295240.27832974.1680424543.1680424543.1680424543.1; __utmc=213295240; __utmz=213295240.1680424543.1.1.utmcsr=google|utmccn=(organic)|utmcmd=organic|utmctr=(not%20provided); __utmt=1; tm_session=e71a4178182ff61dba8a95d8dd1aaf17; __utmb=213295240.7.10.1680424543"
+            "cookie": self.cookie
         })
         html = response.text
         # print(html)
@@ -152,8 +157,6 @@ class Mail:
         print(get_now() + "[" + self.wx_id + "]获取验证码", end="")
         email_data_id = self.get_latest_email()
         code = self.get_code_id(email_data_id)
-        # print("emailData", code)
-        # print("OTP CODE: " + code)
         print(get_now() + "[" + self.wx_id + "]验证码 = " + code)
         return code
 
@@ -161,7 +164,7 @@ class Mail:
 sessions = {}
 
 
-class Client:
+class Poe:
     gql_url = "https://poe.com/api/gql_POST"
     gql_recv_url = "https://poe.com/api/receive_POST"
     home_url = "https://poe.com"
@@ -388,19 +391,21 @@ class Client:
 
     def on_message(self, ws, msg):
         data = json.loads(msg)
-        message = json.loads(data["messages"][0])["payload"]["data"]["messageAdded"]
+        try:
+            message = json.loads(data["messages"][0])["payload"]["data"]["messageAdded"]
 
-        copied_dict = self.active_messages.copy()
-        for key, value in copied_dict.items():
-            # add the message to the appropriate queue
-            if value == message["messageId"] and key in self.message_queues:
-                self.message_queues[key].put(message)
-                return
-
-            # indicate that the response id is tied to the human message id
-            elif key != "pending" and value == None and message["state"] != "complete":
-                self.active_messages[key] = message["messageId"]
-                self.message_queues[key].put(message)
+            copied_dict = self.active_messages.copy()
+            for key, value in copied_dict.items():
+                # add the message to the appropriate queue
+                if value == message["messageId"] and key in self.message_queues:
+                    self.message_queues[key].put(message)
+                    return
+                # indicate that the response id is tied to the human message id
+                elif key != "pending" and value is None and message["state"] != "complete":
+                    self.active_messages[key] = message["messageId"]
+                    self.message_queues[key].put(message)
+        except Exception as err:
+            print(err, msg)
 
     def send_message(self, chatbot, message, with_chat_break=False, timeout=20):
         # if there is another active message, wait until it has finished sending
@@ -441,7 +446,9 @@ class Client:
             except queue.Empty:
                 del self.active_messages[human_message_id]
                 del self.message_queues[human_message_id]
-                raise RuntimeError("Response timed out.")
+                # raise RuntimeError("Response timed out.")
+                message["text"] = "请求超时，请重试"
+                break
 
             # only break when the message is marked as complete
             if message["state"] == "complete":
@@ -575,8 +582,9 @@ class Client:
             result = ""
             for chunk in self.send_message("chinchilla", prompt, with_chat_break=True):
                 # print(chunk["text_new"], end="", flush=True)
-                result += chunk["text_new"]
-            print(get_now() + "Response: ")
+                # result += chunk["text_new"]
+                result = chunk["text"]
+            # print(get_now() + "Response: ")
             # self.purge_conversation("chinchilla", count=3)
             return result
 
@@ -589,6 +597,6 @@ if __name__ == "__main1__":
     mail.get_poe_otp_code()
 
 if __name__ == "__main__":
-    client = Client("suleil2")
+    client = Poe("suleil2")
     message = "你是谁"
     print(client.ask(message))

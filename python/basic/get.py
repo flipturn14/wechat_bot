@@ -78,15 +78,14 @@ def get_personal_detail(wx_id):
     return s
 
 
-def get_user_list():
-    """
-    获取微信通讯录用户名字和wxid
-    获取微信通讯录好友列表
-    """
-    qs = {
+def get_contact_list():
+    j = {
         "id": get_id(),
         "type": USER_LIST,
-        "content": "user list",
-        "wxid": "null",
+        "roomid": 'null',
+        "wxid": 'null',  # not null
+        "content": 'null',  # not null
+        "nickname": 'null',
+        "ext": 'null'
     }
-    return json.dumps(qs)
+    return json.dumps(j)

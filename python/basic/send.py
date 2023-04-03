@@ -23,7 +23,7 @@ def send_txt_msg(text_string, wx_id):
 
 def send_at_meg(wx_id, room_id, content, nickname):
     """
-    发送图片消息
+    发送at消息
     :param wx_id:
     :param room_id:
     :param content:
@@ -37,7 +37,7 @@ def send_at_meg(wx_id, room_id, content, nickname):
         "roomid": room_id,
         "content": content,
         "nickname": nickname,
-        "ext": ""
+        "ext": "null"
     }
     s = json.dumps(qs)
     return s
