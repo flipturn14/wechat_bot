@@ -241,34 +241,6 @@ class Poe:
             # print("%s cookie = %s" % (wx_id, self.pb_cookie))
             self.init(self.pb_cookie)
 
-    def set_credentials(self):
-        print(get_now() + "[" + self.wx_id + "]设置证书")
-        app_settings = self.scrape()
-        # set value
-        self.gql_headers["poe-formkey"] = app_settings["formkey"]
-        self.gql_headers["poe-tchannel"] = app_settings["tchannelData"]["channel"]
-        self.gql_headers["Cookie"] = "p-b=" + self.pb_cookie
-        self.gql_headers = {**self.gql_headers, **self.headers}
-        self.session.headers.update(self.gql_headers)
-        # print("set header ", self.gql_headers)
-        self.credentials["quora_cookie"] = self.pb_cookie
-        return self.pb_cookie
-
-    def scrape(self):
-        print(get_now() + "[" + self.wx_id + "]获取页面信息")
-        response = self.session.get("https://poe.com/login")
-        # print(self.session.headers, self.session.cookies.get_dict())
-        cookie = response.cookies.get("p-b")
-        self.pb_cookie = cookie
-        self.session.headers.update(self.gql_headers)
-        self.session.cookies.set("p-b", self.pb_cookie, domain="poe.com")
-        print(get_now() + "[" + self.wx_id + "]获取settings")
-        _setting = self.session.get('https://poe.com/api/settings')
-        # print(self.session.headers)
-        # print(get_now() + "[" + self.wx_id + "]settings = " + _setting.text)
-        app_settings = json.loads(_setting.text)
-        return app_settings
-
     def get_next_data(self):
         print("Downloading next_data...")
 
@@ -406,6 +378,8 @@ class Poe:
                     self.message_queues[key].put(message)
         except Exception as err:
             print(err, msg)
+            self.disconnect_ws()
+            self.connect_ws()
 
     def send_message(self, chatbot, message, with_chat_break=False, timeout=20):
         # if there is another active message, wait until it has finished sending
@@ -510,6 +484,34 @@ class Poe:
             last_messages = self.get_message_history(chatbot, count=50)[::-1]
         # print(f"No more messages left to delete.")
 
+    def set_credentials(self):
+        print(get_now() + "[" + self.wx_id + "]设置证书")
+        app_settings = self.scrape()
+        # set value
+        self.gql_headers["poe-formkey"] = app_settings["formkey"]
+        self.gql_headers["poe-tchannel"] = app_settings["tchannelData"]["channel"]
+        self.gql_headers["Cookie"] = "p-b=" + self.pb_cookie
+        self.gql_headers = {**self.gql_headers, **self.headers}
+        self.session.headers.update(self.gql_headers)
+        # print("set header ", self.gql_headers)
+        self.credentials["quora_cookie"] = self.pb_cookie
+        return self.pb_cookie
+
+    def scrape(self):
+        print(get_now() + "[" + self.wx_id + "]获取页面信息")
+        response = self.session.get("https://poe.com/login")
+        # print(self.session.headers, self.session.cookies.get_dict())
+        cookie = response.cookies.get("p-b")
+        self.pb_cookie = cookie
+        self.session.headers.update(self.gql_headers)
+        self.session.cookies.set("p-b", self.pb_cookie, domain="poe.com")
+        print(get_now() + "[" + self.wx_id + "]获取settings")
+        _setting = self.session.get('https://poe.com/api/settings')
+        # print(self.session.headers)
+        # print(get_now() + "[" + self.wx_id + "]settings = " + _setting.text)
+        app_settings = json.loads(_setting.text)
+        return app_settings
+
     def login(self):
         print(get_now() + "[" + self.wx_id + "]准备登录")
         mail = Mail(self.wx_id)
@@ -580,7 +582,7 @@ class Poe:
         self.content = prompt
         if prompt:
             result = ""
-            for chunk in self.send_message("chinchilla", prompt, with_chat_break=True):
+            for chunk in self.send_message("chinchilla", prompt):
                 # print(chunk["text_new"], end="", flush=True)
                 # result += chunk["text_new"]
                 result = chunk["text"]
